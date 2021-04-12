@@ -6,9 +6,9 @@ metadata:
 spec:
   selector:
     app: udacity-capstone-project
-    version: green
-  type: LoadBalancer    
+    version: green    
   ports:
     - protocol: TCP  
     - port: 8000
       targetPort: 8000
+  type: LoadBalancer
