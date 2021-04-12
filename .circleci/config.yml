@@ -123,9 +123,9 @@ workflows:
       - linting:
           requires: [installing-deps]
       - scan:
-          requires: [linting, installing-deps]
+          requires: [linting]
       - build-publish-docker-image:
-          requires: [scan, linting]
+          requires: [scan]
           filters:
             branches:
               only: main
