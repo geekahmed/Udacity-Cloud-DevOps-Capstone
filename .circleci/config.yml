@@ -1,0 +1,141 @@
+version: 2.1
+jobs:
+  installing-deps:
+    docker:
+      - image: circleci/node:14.0.0
+    steps:
+      - checkout
+      - run:
+          name: npm install of green version
+          working_directory: ./application-green
+          command: npm install
+      - run:
+          name: npm install of blue version
+          working_directory: ./application-blue
+          command: npm install          
+      
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./application-green/node_modules
+            - ./application-blue/node_modules
+
+
+  linting:
+    docker:
+      - image: circleci/node:14.0.0  
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Code linting green version
+          working_directory: ./application-green
+          command: npm run lint
+      - run:
+          name: Code linting blue version
+          working_directory: ./application-blue
+          command: npm run lint          
+
+  scan:
+    docker:
+      - image: circleci/node:14.0.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Check App against security vulnerabilities green version
+          working_directory: ./application-green
+          command: npm audit --audit-level=critical
+      - run:
+          name: Check App against security vulnerabilities blue version
+          working_directory: ./application-blue
+          command: npm audit --audit-level=critical
+
+  build-publish-docker-image:
+    environment:
+      IMAGE_NAME_GREEN: udacity-devops-capstone-green
+      IMAGE_NAME_BLUE:  udacity-devops-capstone-blue
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and push Docker image green version
+          command: |
+            docker build -t geekahmed/$IMAGE_NAME_GREEN:latest .
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push geekahmed/$IMAGE_NAME_GREEN:latest
+      - run:
+          name: Build and push Docker image blue version
+          command: |
+            docker build -t geekahmed/$IMAGE_NAME_BLUE:latest .
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push geekahmed/$IMAGE_NAME_BLUE:latest
+
+  configure-infrastructure:
+    docker:
+      - image: amazon/aws-cli      
+    steps:      
+      - run:
+          name: Create kube config file
+          command: |
+            aws eks --region us-west-2 update-kubeconfig --name udacity-capstone-project
+
+  deploy-app:
+    docker:
+      - image: circleci/node:13.8.0
+    steps: 
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            sudo apt-get update
+            sudo apt-get install -y apt-transport-https ca-certificates curl 
+            sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            sudo apt-get update
+            sudo apt-get install -y kubectl           
+
+      - attach_workspace:
+          at: .
+      - run:
+          name: Deploying to EKS cluster
+          working_directory: ./kuberenetes
+          command: |
+            aws sts get-caller-identity  
+            aws eks --region us-west-2 update-kubeconfig --name udacity-capstone-project
+            kubectl config use-context arn:aws:eks:us-west-2:642858812510:cluster/udacity-capstone-project
+            kubectl apply -f blue.yml
+            kubectl apply -f green.yml
+            kubectl apply -f service.yml
+          
+workflows:
+  default:
+    jobs:
+      - installing-deps
+      - linting:
+          requires: [installing-deps]
+      - scan:
+          requires: [linting, installing-deps]
+      - build-publish-docker-image:
+          requires: [scan, linting]
+          filters:
+            branches:
+              only: main
+      - configure-infrastructure:
+          requires: [build-publish-docker-image]
+          filters:
+            branches:
+              only: main
+      - deploy-app:
+          requires: [configure-infrastructure]
+          filters:
+            branches:
+              only: main

@@ -1,0 +1,17 @@
+{
+  "name": "UdacityCloudDevOpsNanodegree",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "Ahmed Moustafa",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "lint": "eslint --ignore-path .gitignore ."
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.24.0"
+  }
+}
