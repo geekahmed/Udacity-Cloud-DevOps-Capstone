@@ -22,7 +22,7 @@ spec:
           image: docker.io/geekahmed/udacity-devops-capstone-blue
           imagePullPolicy: "Always"
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           resources:
             limits:
               memory: "256Mi"

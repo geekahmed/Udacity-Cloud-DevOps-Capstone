@@ -93,7 +93,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: |
+          command: 80|
             sudo apt-get update && sudo apt-get install -yy less
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
@@ -114,10 +114,13 @@ jobs:
             aws sts get-caller-identity  
             aws eks --region us-west-2 update-kubeconfig --name udacity-capstone-project
             kubectl config use-context arn:aws:eks:us-west-2:642858812510:cluster/udacity-capstone-project
+            
             kubectl apply -f blue.yml
-            kubectl apply -f green.yml
+            #kubectl apply -f green.yml
             kubectl apply -f service.yml
-          
+            
+            kubectl get pods
+            kubectl get services          
 workflows:
   default:
     jobs:
