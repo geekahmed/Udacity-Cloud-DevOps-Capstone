@@ -6,7 +6,7 @@ metadata:
     app: udacity-capstone-project
 
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: udacity-capstone-project
@@ -25,6 +25,6 @@ spec:
             - containerPort: 80
           resources:
             limits:
-              memory: "256Mi"
-              cpu: "1000m"
+              memory: "64Mi"
+              cpu: "500m"
 
