@@ -2,13 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: udacity-capstone-project-service
-
 spec:
   selector:
     app: udacity-capstone-project
-    version: green    
+    version: green
   ports:
-    - protocol: TCP  
-    - port: 8000
-      targetPort: 8000
+  - protocol: TCP
+    port: 8000
+    targetPort : 8000
   type: LoadBalancer
