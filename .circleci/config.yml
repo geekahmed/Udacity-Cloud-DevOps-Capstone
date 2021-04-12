@@ -64,12 +64,14 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build and push Docker image green version
+          working_directory: ./application-green
           command: |
             docker build -t geekahmed/$IMAGE_NAME_GREEN:latest .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push geekahmed/$IMAGE_NAME_GREEN:latest
       - run:
           name: Build and push Docker image blue version
+          working_directory: ./application-blue
           command: |
             docker build -t geekahmed/$IMAGE_NAME_BLUE:latest .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
